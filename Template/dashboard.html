@@ -1,0 +1,18 @@
+<h2>{{ business.name }}</h2>
+<form method="post" action="/add_product">
+  <input name="business_id" type="hidden" value="{{ business.id }}">
+  <input name="name" placeholder="Product Name">
+  <input name="price" placeholder="Price">
+  <button>Add Product</button>
+</form>
+
+<ul>
+  {% for product in products %}
+    <li>{{ product.name }} - {{ product.price }}
+      <form method="post" action="/buy/{{ product.id }}">
+        <input name="quantity" type="number" value="1" min="1">
+        <button>Buy</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
