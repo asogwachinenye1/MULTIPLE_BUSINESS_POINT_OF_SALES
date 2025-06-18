@@ -8,6 +8,7 @@ jinja2
 python-multipart
 python-barcode
 reportlab
+streamlit
 flask
 flask_sqlalchemy
-streamlit
+fpdf
