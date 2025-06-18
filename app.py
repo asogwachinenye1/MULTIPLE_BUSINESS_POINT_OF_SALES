@@ -7,13 +7,21 @@ from receipt_utils import generate_receipt_pdf_and_barcode
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import create_engine
 
+from dotenv import load_dotenv
+import os
 import uuid
 import datetime
 import pandas as pd
 import io
 
+# Load environment variables
+load_dotenv()
+
+# Get database URL from .env file
+SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
+
 # Initialize SQLAlchemy
-engine = create_engine('postgresql://postgres:TEST@localhost/pos_system')
+engine = create_engine(SUPABASE_DB_URL)
 Session = scoped_session(sessionmaker(bind=engine))
 session = Session()
 
@@ -147,14 +155,6 @@ elif page == "Dashboard":
                 session.add(sale)
                 session.commit()
 
-                # 🔍 Debug output: confirm business info
-                st.subheader("🔍 DEBUG: Business Info Before Receipt")
-                st.write("Business Name:", business.name)
-                st.write("Address:", business.address)
-                st.write("Phone:", business.phone)
-                st.write("Account No:", business.account_number)
-
-                # Generate receipt
                 pdf_data, barcode_data = generate_receipt_pdf_and_barcode(
                     receipt_no,
                     timestamp,
@@ -194,18 +194,14 @@ elif page == "Dashboard":
             df_sales.to_excel(excel_buffer, index=False, engine='openpyxl')
             st.download_button("📥 Export as Excel", data=excel_buffer.getvalue(), file_name="sales.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-        # ... [keep everything above unchanged until line: if st.session_state.role == "admin"]
-
         if st.session_state.role == "admin":
             st.subheader("🛠️ Admin Panel")
 
-            # Show all users
             all_users = session.query(User).all()
             st.write("All Registered Users:")
             for u in all_users:
                 st.write(f"🧑 {u.username} - {u.role}")
 
-            # Admin password reset form
             st.markdown("---")
             st.subheader("🔐 Reset a User's Password")
             target_username = st.text_input("Username to Reset")

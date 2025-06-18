@@ -1,56 +1,48 @@
-from db_config import db
-from datetime import datetime
-import uuid
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship, declarative_base
+import datetime
 
-class User(db.Model):
+Base = declarative_base()
+
+class User(Base):
     __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True)
+    email = Column(String, unique=True)
+    password_hash = Column(String)
+    role = Column(String)
+    business = relationship("Business", back_populates="user", uselist=False)
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    role = db.Column(db.String(20), default='user')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    businesses = db.relationship('Business', backref='owner', cascade="all, delete-orphan")
-
-
-class Business(db.Model):
+class Business(Base):
     __tablename__ = 'businesses'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    address = Column(String)
+    account_number = Column(String)
+    phone = Column(String)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship("User", back_populates="business")
+    products = relationship("Product", back_populates="business")
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    address = db.Column(db.String(200))
-    account_number = db.Column(db.String(50))
-    phone = db.Column(db.String(20))  # ✅ Ensure this is added
-
-
-
-class Product(db.Model):
+class Product(Base):
     __tablename__ = 'products'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    price = Column(Float)
+    business_id = Column(Integer, ForeignKey('businesses.id'))
+    business = relationship("Business", back_populates="products")
+    sales = relationship("Sale", back_populates="product")
 
-    id = db.Column(db.Integer, primary_key=True)
-    business_id = db.Column(db.Integer, db.ForeignKey('businesses.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-
-    sales = db.relationship("Sale", back_populates="product", cascade="all, delete-orphan")
-
-
-class Sale(db.Model):
+class Sale(Base):
     __tablename__ = 'sales'
-
-    id = db.Column(db.Integer, primary_key=True)
-    receipt_number = db.Column(db.String, default=lambda: str(uuid.uuid4())[:8], unique=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    total = db.Column(db.Float, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-    customer_name = db.Column(db.String(100))
-    customer_address = db.Column(db.String(200))
-    customer_phone = db.Column(db.String(20))
-    sales_rep = db.Column(db.String(100))
-
-    product = db.relationship("Product", back_populates="sales")
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'))
+    quantity = Column(Integer)
+    total = Column(Float)
+    customer_name = Column(String)
+    customer_address = Column(String)
+    customer_phone = Column(String)
+    sales_rep = Column(String)
+    receipt_number = Column(String)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    product = relationship("Product", back_populates="sales")
