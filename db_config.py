@@ -1,19 +1,16 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask import Flask
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
+# ✅ Load environment variables
 load_dotenv()
 
-# Get DB URL
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL not found in .env")
+SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
 
-# Flask app config
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+if not SUPABASE_DB_URL:
+    raise ValueError("SUPABASE_DB_URL not found in .env")
 
-db = SQLAlchemy(app)
+engine = create_engine(SUPABASE_DB_URL)
+Session = scoped_session(sessionmaker(bind=engine))
+session = Session()

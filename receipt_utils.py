@@ -1,89 +1,111 @@
-from fpdf import FPDF
-import barcode
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+from barcode import Code128
 from barcode.writer import ImageWriter
-from PIL import Image
-import io
-import tempfile
+from datetime import datetime
 import os
 
-def generate_receipt_pdf_and_barcode(
-    receipt_no,
-    timestamp,
-    customer_name,
-    customer_address,
-    customer_phone,
-    sales_rep,
-    business,
-    product,
-    quantity,
-    total
-):
-    # ─────────────────────────────────────────────────────
-    # 1. Generate Barcode
-    barcode_io = io.BytesIO()
-    ean = barcode.get('code128', receipt_no, writer=ImageWriter())
-    ean.write(barcode_io)
-    barcode_io.seek(0)
+def generate_receipt_pdf_and_barcode(receipt_data: dict, output_dir="receipts"):
+    os.makedirs(output_dir, exist_ok=True)
 
-    # Save barcode to temp file for FPDF to use
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
-        barcode_path = tmp_file.name
-        Image.open(barcode_io).save(barcode_path)
+    business = receipt_data.get("business", {})
+    customer = receipt_data.get("customer", {})
+    items = receipt_data.get("items", [])
+    receipt_no = receipt_data.get("receipt_no", "RCP0001")
+    seller = receipt_data.get("seller", "Cashier")
+    payment_mode = receipt_data.get("payment_mode", "Cash")
+    tax_rate = receipt_data.get("tax_rate", 0.075)  # 7.5%
+    date = receipt_data.get("date", datetime.now().strftime("%Y-%m-%d"))
 
-    # ─────────────────────────────────────────────────────
-    # 2. Create PDF Receipt
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    total = sum(item["price"] * item["quantity"] for item in items)
+    tax = total * tax_rate
+    grand_total = total + tax
 
-    # Business Header
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, business.name or "No Name", ln=True, align="C")
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 8, f"Address: {business.address or 'N/A'}", ln=True, align="C")
-    pdf.cell(0, 8, f"Phone: {business.phone or 'N/A'}", ln=True, align="C")
-    pdf.cell(0, 8, f"Account No: {business.account_number or 'N/A'}", ln=True, align="C")
+    # Generate Barcode
+    barcode_path = os.path.join(output_dir, f"{receipt_no}_barcode.png")
+    Code128(receipt_no, writer=ImageWriter()).write(open(barcode_path, "wb"))
 
-    pdf.ln(5)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(5)
+    # PDF path
+    pdf_path = os.path.join(output_dir, f"{receipt_no}.pdf")
+    c = canvas.Canvas(pdf_path, pagesize=A4)
+    width, height = A4
 
-    # Receipt Info
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, f"Receipt #: {receipt_no}", ln=True)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 8, f"Date: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
-    pdf.cell(0, 8, f"Sales Rep: {sales_rep}", ln=True)
-    pdf.ln(5)
+    y = height - 30
 
-    # Customer Info
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "Customer Details", ln=True)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 8, f"Name: {customer_name}", ln=True)
-    pdf.cell(0, 8, f"Address: {customer_address}", ln=True)
-    pdf.cell(0, 8, f"Phone: {customer_phone}", ln=True)
-    pdf.ln(5)
+    # Header: Business Info
+    c.setFont("Helvetica-Bold", 14)
+    c.drawCentredString(width / 2, y, business.get("name", "BUSINESS NAME").upper())
+    c.setFont("Helvetica", 10)
+    y -= 15
+    c.drawCentredString(width / 2, y, f'{business.get("address", "Business Address")} · {business.get("phone", "Phone")}')
+    y -= 15
+    c.line(30, y, width - 30, y)
 
-    # Product Info
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "Purchase Summary", ln=True)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 8, f"Product: {product.name}", ln=True)
-    pdf.cell(0, 8, f"Quantity: {quantity}", ln=True)
-    pdf.cell(0, 8, f"Unit Price: ${product.price:.2f}", ln=True)
-    pdf.cell(0, 8, f"Total: ${total:.2f}", ln=True)
-    pdf.ln(10)
+    # Customer Info and Receipt Details
+    y -= 25
+    c.setFont("Helvetica", 10)
+    c.drawString(30, y, f"Customer: {customer.get('name', 'N/A')}")
+    c.drawRightString(width - 30, y, f"Receipt No: {receipt_no}")
+    y -= 15
+    c.drawString(30, y, f"Address: {customer.get('address', 'N/A')}")
+    c.drawRightString(width - 30, y, f"Date: {date}")
+    y -= 15
+    c.drawString(30, y, f"Phone: {customer.get('phone', 'N/A')}")
+    y -= 15
+    c.line(30, y, width - 30, y)
+
+    # Transaction Table
+    y -= 20
+    table_data = [["S/N", "Item", "Price", "Qty", "Subtotal"]]
+    for idx, item in enumerate(items, start=1):
+        subtotal = item["price"] * item["quantity"]
+        table_data.append([
+            str(idx),
+            item["name"],
+            f"₦{item['price']:.2f}",
+            str(item["quantity"]),
+            f"₦{subtotal:.2f}",
+        ])
+
+    table = Table(table_data, colWidths=[40, 180, 80, 50, 80])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+    ]))
+    table.wrapOn(c, width, height)
+    table.drawOn(c, 30, y - 20 - 20 * len(items))
+
+    y -= 40 + 20 * len(items)
+
+    # Totals
+    c.setFont("Helvetica-Bold", 10)
+    c.drawRightString(width - 30, y, f"TAX (7.5%):   ₦{tax:.2f}")
+    y -= 15
+    c.drawRightString(width - 30, y, f"TOTAL:        ₦{grand_total:.2f}")
+    y -= 25
+    c.line(30, y, width - 30, y)
+
+    # Seller and Signatures
+    y -= 25
+    c.setFont("Helvetica", 10)
+    c.drawString(30, y, f"Seller: {seller}")
+    y -= 20
+    c.drawString(30, y, "Customer Signature: ______________________")
+    y -= 20
+    c.drawString(30, y, "Seller Signature:   ______________________")
 
     # Barcode
-    pdf.image(barcode_path, x=60, w=90)
-    pdf.ln(5)
-    pdf.cell(0, 10, "Thank you for your purchase!", ln=True, align="C")
+    c.drawImage(barcode_path, width / 2 - 70, y - 70, width=140, height=40, preserveAspectRatio=True)
+    y -= 80
 
-    # Output PDF as bytes
-    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    # Footer
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawCentredString(width / 2, y, "THANK YOU FOR YOUR PURCHASE!")
 
-    # Clean up temp barcode image
-    os.remove(barcode_path)
-
-    return pdf_bytes, barcode_io.getvalue()
+    c.save()
+    return pdf_path

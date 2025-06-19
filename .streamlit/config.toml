@@ -1,0 +1,7 @@
+[theme]
+base="light"               # or "dark"
+primaryColor="#1F77B4"
+backgroundColor="#F5F7FA"  # Soft light gray/blue
+secondaryBackgroundColor="#E0ECF8"
+textColor="#000000"
+font="sans serif"

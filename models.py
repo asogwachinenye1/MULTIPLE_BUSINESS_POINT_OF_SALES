@@ -5,44 +5,52 @@ import datetime
 Base = declarative_base()
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
+
     id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True)
-    email = Column(String, unique=True)
-    password_hash = Column(String)
-    role = Column(String)
-    business = relationship("Business", back_populates="user", uselist=False)
+    username = Column(String(50), unique=True, nullable=False)
+    email = Column(String(100), nullable=False)
+    password_hash = Column(String(200), nullable=False)
+    role = Column(String(20), default="user")
+
+    business = relationship("Business", back_populates="owner", uselist=False)
 
 class Business(Base):
-    __tablename__ = 'businesses'
+    __tablename__ = "businesses"
+
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    address = Column(String)
-    account_number = Column(String)
-    phone = Column(String)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship("User", back_populates="business")
+    user_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String(100), nullable=False)
+    address = Column(String(200))
+    phone = Column(String(20))
+    account_number = Column(String(50))
+
+    owner = relationship("User", back_populates="business")
     products = relationship("Product", back_populates="business")
 
 class Product(Base):
-    __tablename__ = 'products'
+    __tablename__ = "products"
+
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    price = Column(Float)
-    business_id = Column(Integer, ForeignKey('businesses.id'))
+    name = Column(String(100), nullable=False)
+    price = Column(Float, nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id"))
+
     business = relationship("Business", back_populates="products")
     sales = relationship("Sale", back_populates="product")
 
 class Sale(Base):
-    __tablename__ = 'sales'
+    __tablename__ = "sales"
+
     id = Column(Integer, primary_key=True)
-    product_id = Column(Integer, ForeignKey('products.id'))
-    quantity = Column(Integer)
-    total = Column(Float)
-    customer_name = Column(String)
-    customer_address = Column(String)
-    customer_phone = Column(String)
-    sales_rep = Column(String)
-    receipt_number = Column(String)
+    product_id = Column(Integer, ForeignKey("products.id"))
+    quantity = Column(Integer, nullable=False)
+    total = Column(Float, nullable=False)
+    customer_name = Column(String(100))
+    customer_address = Column(String(200))
+    customer_phone = Column(String(20))
+    sales_rep = Column(String(100))
+    receipt_number = Column(String(50), unique=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
     product = relationship("Product", back_populates="sales")
