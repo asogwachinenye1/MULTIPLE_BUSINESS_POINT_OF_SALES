@@ -1,123 +1,146 @@
-# 🛒 VALUEGATE POS SYSTEM
+# 📦 POS System – Streamlit + FastAPI
 
-A powerful multi-business Point‑of‑Sale system with:
+This is a full-featured Point of Sale (POS) system that allows business owners to register, manage products, record sales, and generate professional PDF receipts with barcodes.
 
-- 🖥️ **Backend**: FastAPI + PostgreSQL with JWT authentication and barcode-enabled PDF receipts
-- 📊 **Dashboard**: Streamlit-based analytics and transaction management
-- 🖨️ **Desktop App**: Tkinter POS for offline use with auto-sync and thermal printing
-- 📱 **Mobile App**: React Native POS app (Expo) for Android
-- 🧾 **Receipts**: PDF format with logo, barcode, customer & seller details
-- 📦 **Extras**: Excel reporting, auto email summaries, Docker-ready setup
+✅ Features
+🧾 Business registration
 
----
+🔐 User login (admin/user roles)
 
-## ⚙️ Prerequisites
+📦 Product management
 
-- Python 3.11+
-- PostgreSQL (hosted e.g., on Supabase)
-- Node.js and npm
-- Expo CLI (for mobile app):   ```bash
-  npm install -g expo-cli
-USB thermal printer drivers (for desktop receipts)
+🛒 Sales recording
 
-🧪 Setup Instructions
-🔧 1. Backend (FastAPI)
+📄 PDF receipt generation with:
+
+Business + customer header
+
+Items list (S/N, Name, Price, Qty, Subtotal)
+
+Tax, Total
+
+Barcode
+
+Signature placeholder
+
+📊 Sales history exportable as CSV & Excel
+
+🛠️ Admin panel for password reset
+
+☁️ PostgreSQL hosted on Supabase
+
+🎨 Streamlit frontend interface
+
+🏗️ Folder Structure
 bash
 Copy
 Edit
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-Set up .env in the backend/ folder:
+pos_project/
+│
+├── app.py                    # Main Streamlit frontend
+├── auth_utils.py             # Password hashing & verification
+├── db_config.py              # Database session setup
+├── models.py                 # SQLAlchemy models
+├── receipt_utils.py          # PDF + barcode receipt generator
+├── requirements.txt          # Python dependencies
+├── .env                      # Contains SUPABASE_DB_URL
+└── README.md                 # Project documentation
+🛠️ Setup Instructions
+
+✅ Clone the repository
+bash
+Copy
+Edit
+git clone <https://github.com/your-username/pos-system.git>
+cd pos-system
+
+✅ Create .env file
+Create a .env file and add:
 
 ini
 Copy
 Edit
-DATABASE_URL=postgresql://postgres:Ngams2715**@db.fgxebhqyspfwmqjqnpgr.supabase.co:5432/postgres
-SECRET_KEY=your-secret-key
-🖥️ 2. Streamlit Dashboard (Admin Panel)
+SUPABASE_DB_URL=your_postgres_connection_url
+You can get this from Supabase project > Database > Connection Info.
+
+✅ Install dependencies
+Use pip to install required libraries:
+
 bash
 Copy
 Edit
-cd dashboard
 pip install -r requirements.txt
+
+✅ Run the app
+bash
+Copy
+Edit
 streamlit run app.py
-Make sure .env in the dashboard/ folder contains:
-
-bash
+🧾 Sample Receipt Layout
+markdown
 Copy
 Edit
-DATABASE_URL=postgresql://postgres:Ngams2715**@db.fgxebhqyspfwmqjqnpgr.supabase.co:5432/postgres
-🖨️ 3. Desktop App (Tkinter)
-bash
-Copy
-Edit
-cd desktop_app
-pip install -r requirements.txt
-python app.py
-Supports offline data entry with auto-sync every 30 seconds (background thread). Set up a local SQLite database for offline use.
 
-📱 4. Mobile App (React Native)
-bash
-Copy
-Edit
-cd mobile_app
-npm install
-expo start
-Log in via QR code using Expo Go on Android.
+----------------------------------------------------
 
-Make sure API URLs match your deployed FastAPI backend.
+               [BUSINESS LOGO / NAME]
+          Address | Phone | Account Number
 
-📤 Deployment
-You can deploy the backend on:
+Customer: [Name]        Phone: [Phone]
+Address:  [Address]
 
-Render
+Date: YYYY-MM-DD        Receipt No: XXXXXXXX
+Sales Rep: [Cashier Name]
 
-Railway
+----------------------------------------------------
+S/N  Item         Price   Qty   Subtotal
+1    Product A    ₦500    2     ₦1000
 
-Supabase (for PostgreSQL hosting only)
+                     Tax (7.5%): ₦75
+                     Total:      ₦1075
+----------------------------------------------------
 
-To connect your Supabase PostgreSQL:
+[Barcode Image]
 
-bash
-Copy
-Edit
-DATABASE_URL=postgresql://postgres:password@db.fgxebhqyspfwmqjqnpgr.supabase.co:5432/postgres
-📧 Email Reports (Optional)
-Enable automatic daily/weekly email of sales reports using:
+Customer Signature: _______________
+Seller Signature: ________________
+📦 PDF & Barcode Tools
+This app uses:
 
-SMTP with smtplib
+reportlab – for structured PDF layout
 
-Excel generation via pandas.to_excel()
+python-barcode – to generate receipt barcode
 
-🧾 Sample Receipt Preview
-Receipts include:
+Pillow – for image rendering
 
-Business logo (optional)
+📊 Export Options
+Download PDF receipt for every transaction
 
-Barcode receipt ID
+Export Sales history as:
 
-Seller & customer details
+CSV
 
-Item breakdown
+Excel (.xlsx)
 
-PDF + Excel exports
+🧑‍💼 Admin Features
+If logged in as admin:
 
-✅ Tech Stack Summary
-Layer Stack
-Backend FastAPI, SQLAlchemy, JWT
-Database PostgreSQL (Supabase)
-Frontend Web Streamlit
-Desktop App Tkinter
-Mobile App React Native (Expo)
-PDF/Barcode fpdf, python-barcode
-Reports Pandas, Excel, CSV, Email
+View all registered users
 
-📎 License
-MIT License
+Reset any user’s password securely
 
-👩🏽‍💻 Author
-Asogwa Chinenye Joy
-Valuegate Consulting
-Email: <asogwachinenye10@gmail.com>
+💡 Ideas for Future Upgrades
+📱 Mobile view / React Native frontend
+
+📦 Inventory alerts
+
+🧾 Invoice printing with POS printer
+
+📤 Auto-email PDF receipts or reports
+
+📅 Daily/Weekly/Monthly sales summaries
+
+📮 Contact
+For help or collaboration:
+email: <asogwachinenyejoy@gmail.com>
 Twitter: <https://x.com/AsogwaChin82174>
