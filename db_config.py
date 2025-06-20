@@ -1,5 +1,3 @@
-# db_config.py
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from dotenv import load_dotenv
@@ -8,6 +6,7 @@ import os
 # ✅ Load environment variables
 load_dotenv()
 
+# ✅ Use the Railway-provided environment variable
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
