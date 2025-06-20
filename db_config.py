@@ -1,3 +1,5 @@
+# db_config.py
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from dotenv import load_dotenv
@@ -6,11 +8,11 @@ import os
 # ✅ Load environment variables
 load_dotenv()
 
-SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not SUPABASE_DB_URL:
-    raise ValueError("SUPABASE_DB_URL not found in .env")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL not found in environment")
 
-engine = create_engine(SUPABASE_DB_URL)
+engine = create_engine(DATABASE_URL)
 Session = scoped_session(sessionmaker(bind=engine))
 session = Session()
